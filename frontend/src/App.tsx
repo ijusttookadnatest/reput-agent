@@ -5,22 +5,22 @@ import './index.css'
 const API = 'http://localhost:3000'
 
 const COMPANY_LOGOS = [
-  { name: 'Stripe',    domain: 'stripe.com' },
-  { name: 'Shopify',  domain: 'shopify.com' },
-  { name: 'Coinbase', domain: 'coinbase.com' },
-  { name: 'Binance',  domain: 'binance.com' },
-  { name: 'Uniswap',  domain: 'uniswap.org' },
-  { name: 'Aave',     domain: 'aave.com' },
-  { name: 'Chainlink',domain: 'chain.link' },
-  { name: 'OpenSea',  domain: 'opensea.io' },
-  { name: 'Alchemy',  domain: 'alchemy.com' },
-  { name: 'Polygon',  domain: 'polygon.technology' },
-  { name: 'Arbitrum', domain: 'arbitrum.io' },
-  { name: 'Optimism', domain: 'optimism.io' },
-  { name: 'Lido',     domain: 'lido.fi' },
-  { name: 'Curve',    domain: 'curve.fi' },
-  { name: 'dYdX',     domain: 'dydx.exchange' },
-  { name: 'Circle',   domain: 'circle.com' },
+  { name: 'Stripe',    slug: 'stripe' },
+  { name: 'Shopify',  slug: 'shopify' },
+  { name: 'Coinbase', slug: 'coinbase' },
+  { name: 'Binance',  slug: 'binance' },
+  { name: 'Uniswap',  slug: 'uniswap' },
+  { name: 'Aave',     slug: 'aave' },
+  { name: 'Chainlink',slug: 'chainlink' },
+  { name: 'OpenSea',  slug: 'opensea' },
+  { name: 'Ethereum', slug: 'ethereum' },
+  { name: 'Polygon',  slug: 'polygon' },
+  { name: 'Solana',   slug: 'solana' },
+  { name: 'Optimism', slug: 'optimism' },
+  { name: 'Tether',   slug: 'tether' },
+  { name: 'Curve',    slug: 'curve' },
+  { name: 'Gnosis',   slug: 'gnosis' },
+  { name: 'Compound', slug: 'compound' },
 ]
 
 // ── Agent name mapping ────────────────────────────────────────────────────────
@@ -32,7 +32,11 @@ const AGENT_NAMES = [
 ]
 
 function agentName(agentId: number) {
-  return AGENT_NAMES[agentId % AGENT_NAMES.length]
+  return AGENT_NAMES[agentId % AGENT_NAMES.length].toLowerCase()
+}
+
+function agentEns(agentId: number) {
+  return `agent-${agentName(agentId)}.trustagent.eth`
 }
 
 // ── Score helpers ─────────────────────────────────────────────────────────────
@@ -90,34 +94,42 @@ function TrustAgentLogo({ size = 36 }: { size?: number }) {
 
 // ── Provider trust banner ─────────────────────────────────────────────────────
 
-const FAKE_PROVIDERS = [
-  { name: 'NEXUS·AI',     style: { fontWeight: 800, letterSpacing: 2, fontSize: 13 } },
-  { name: 'OmegaTrade',   style: { fontWeight: 700, letterSpacing: -0.5, fontSize: 15 } },
-  { name: 'pulse.swap',   style: { fontWeight: 400, letterSpacing: 0, fontSize: 14, fontStyle: 'italic' as const } },
-  { name: 'AuraFi',       style: { fontWeight: 800, letterSpacing: -1, fontSize: 16 } },
-  { name: 'VECTOR',       style: { fontWeight: 900, letterSpacing: 3, fontSize: 12 } },
-  { name: 'zenith',       style: { fontWeight: 300, letterSpacing: 1, fontSize: 16 } },
-  { name: 'ApexOracle',   style: { fontWeight: 700, letterSpacing: -0.5, fontSize: 14 } },
-  { name: 'ForgeDAO',     style: { fontWeight: 800, letterSpacing: 0, fontSize: 15 } },
-  { name: 'helix·swap',   style: { fontWeight: 400, letterSpacing: 1, fontSize: 13 } },
-  { name: 'PRISM LABS',   style: { fontWeight: 700, letterSpacing: 2, fontSize: 12 } },
+const PROVIDER_LOGOS = [
+  { name: 'Uniswap',   slug: 'uniswap' },
+  { name: 'Aave',      slug: 'aave' },
+  { name: 'Coinbase',  slug: 'coinbase' },
+  { name: 'Ethereum',  slug: 'ethereum' },
+  { name: 'Polygon',   slug: 'polygon' },
+  { name: 'Solana',    slug: 'solana' },
+  { name: 'Optimism',  slug: 'optimism' },
+  { name: 'OpenSea',   slug: 'opensea' },
+  { name: 'Chainlink', slug: 'chainlink' },
+  { name: 'Stripe',    slug: 'stripe' },
 ]
 
 function ProviderBanner() {
   return (
-    <div style={{ borderBottom: '1px solid #1a1a1a', padding: '20px 24px' }}>
+    <div style={{ borderBottom: '1px solid #1a1a1a', padding: '24px 24px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <p style={{ textAlign: 'center', fontSize: 11, color: '#333', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 18 }}>
+        <p style={{ textAlign: 'center', fontSize: 11, color: '#3a3a3a', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 22 }}>
           Trusted by leading agent providers
         </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 32 }}>
-          {FAKE_PROVIDERS.map(p => (
-            <span key={p.name} style={{ color: '#3a3a3a', transition: 'color 0.15s', cursor: 'default', ...p.style }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#fff' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#3a3a3a' }}
-            >
-              {p.name}
-            </span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 40 }}>
+          {PROVIDER_LOGOS.map(p => (
+            <img
+              key={p.name}
+              src={`https://cdn.simpleicons.org/${p.slug}/white`}
+              alt={p.name}
+              style={{
+                height: 28, objectFit: 'contain',
+                opacity: 0.3,
+                transition: 'opacity 0.2s',
+                cursor: 'default',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.7' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '0.3' }}
+              onError={e => { e.currentTarget.style.display = 'none' }}
+            />
           ))}
         </div>
       </div>
@@ -157,7 +169,7 @@ function AgentCard({ agent }: { agent: Agent }) {
     >
       <div style={{
         background: '#141414', height: 76, borderBottom: '1px solid #1f1f1f',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
       }}>
         <div style={{
           width: 44, height: 44, borderRadius: 10, background: '#fff',
@@ -165,12 +177,12 @@ function AgentCard({ agent }: { agent: Agent }) {
           overflow: 'hidden', flexShrink: 0,
         }}>
           <img
-            src={`https://logo.clearbit.com/${company.domain}`}
+            src={`https://cdn.simpleicons.org/${company.slug}`}
             alt={company.name}
-            style={{ width: 32, height: 32, objectFit: 'contain' }}
+            style={{ width: 28, height: 28, objectFit: 'contain' }}
             onError={e => {
               e.currentTarget.style.display = 'none'
-              e.currentTarget.parentElement!.innerHTML = `<span style="font-size:13px;font-weight:700;color:#000">${company.name.slice(0, 2).toUpperCase()}</span>`
+              e.currentTarget.parentElement!.innerHTML = `<span style="font-size:11px;font-weight:700;color:#000">${company.name.slice(0, 2).toUpperCase()}</span>`
             }}
           />
         </div>
@@ -178,11 +190,11 @@ function AgentCard({ agent }: { agent: Agent }) {
 
       <div style={{ padding: '14px 14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
         <div>
-          <div style={{ fontWeight: 600, fontSize: 13, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {agentName(agent.agentId)}
+          <div style={{ fontWeight: 600, fontSize: 13, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'monospace' }}>
+            {agentEns(agent.agentId)}
           </div>
-          <div style={{ fontSize: 11, color: '#525252', marginTop: 2, fontFamily: 'monospace' }}>
-            {agent.walletAddress.slice(0, 10)}…{agent.walletAddress.slice(-4)}
+          <div style={{ fontSize: 10, color: '#a3a3a3', marginTop: 3 }}>
+            via {company.name}
           </div>
         </div>
 
@@ -192,8 +204,8 @@ function AgentCard({ agent }: { agent: Agent }) {
           <span style={{ fontWeight: 700, fontSize: 13, color: scoreColor(agent.score) }}>
             {scoreLabel(agent.score)}
           </span>
-          <span style={{ fontSize: 11, color: '#525252' }}>
-            {agent.interactionCount.toLocaleString()} txs
+          <span style={{ fontSize: 11, color: '#a3a3a3' }}>
+            ({agent.interactionCount.toLocaleString()} txs)
           </span>
         </div>
 
@@ -204,9 +216,7 @@ function AgentCard({ agent }: { agent: Agent }) {
           }}>
             {agent.category}
           </span>
-          {agent.verified && (
-            <span style={{ fontSize: 10, color: '#00b67a', fontWeight: 700 }}>✓ TEE</span>
-          )}
+          <span style={{ fontSize: 10, color: '#00b67a', fontWeight: 700 }}>✓ TEE</span>
         </div>
       </div>
     </div>
@@ -270,7 +280,7 @@ function ReviewCard({ review }: { review: typeof MOCK_REVIEWS[0] }) {
         </div>
         <div>
           <div style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{review.authorName}</div>
-          <div style={{ fontSize: 11, color: '#525252' }}>{review.date}</div>
+          <div style={{ fontSize: 11, color: '#a3a3a3' }}>{review.date}</div>
         </div>
         <div style={{ marginLeft: 'auto' }}>
           <ScoreStars score={review.value} size={14} />
@@ -288,10 +298,10 @@ function ReviewCard({ review }: { review: typeof MOCK_REVIEWS[0] }) {
         <AgentAvatar agentId={agent.agentId} size={22} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#a3a3a3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {agentName(agent.agentId)}
+            {agentEns(agent.agentId)}
           </div>
         </div>
-        <span style={{ fontSize: 10, color: '#525252' }}>{agent.category}</span>
+        <span style={{ fontSize: 10, color: '#a3a3a3' }}>{agent.category}</span>
       </div>
     </div>
   )
@@ -311,7 +321,7 @@ function StatsBar() {
         ].map(stat => (
           <div key={stat.label} style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 700, fontSize: 22, color: '#fff' }}>{stat.value}</div>
-            <div style={{ fontSize: 12, color: '#525252', marginTop: 2 }}>{stat.label}</div>
+            <div style={{ fontSize: 12, color: '#a3a3a3', marginTop: 2 }}>{stat.label}</div>
           </div>
         ))}
       </div>
@@ -341,18 +351,18 @@ function Homepage() {
       {/* Hero */}
       <div style={{
         padding: '80px 24px 64px', textAlign: 'center',
-        background: 'radial-gradient(ellipse 90% 60% at 50% -5%, #0f2d5c 0%, #060d1f 55%, #000 80%)',
+        background: 'radial-gradient(ellipse 90% 60% at 50% -5%, #0f3d24 0%, #050f09 55%, #000 80%)',
         borderBottom: '1px solid #1a1a1a',
       }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 3, color: '#525252', textTransform: 'uppercase', marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 3, color: '#a3a3a3', textTransform: 'uppercase', marginBottom: 20 }}>
             Reputation layer for agentic commerce
           </div>
           <h1 style={{ fontSize: 48, fontWeight: 700, color: '#fff', marginBottom: 14, lineHeight: 1.1, letterSpacing: -1.5 }}>
             Find a trusted<br />
             <span style={{ color: '#00b67a' }}>AI Agent</span>
           </h1>
-          <p style={{ fontSize: 15, color: '#525252', marginBottom: 36, lineHeight: 1.7, maxWidth: 480, margin: '0 auto 36px' }}>
+          <p style={{ fontSize: 15, color: '#a3a3a3', marginBottom: 36, lineHeight: 1.7, maxWidth: 480, margin: '0 auto 36px' }}>
             Reputation scores computed inside a Flare TEE and signed cryptographically — verifiable on-chain via ENS, no API required.
           </p>
 
@@ -385,7 +395,7 @@ function Homepage() {
           {searched && (
             <div style={{ marginTop: 12, textAlign: 'left' }}>
               {results.length === 0
-                ? <div style={{ color: '#525252', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>
+                ? <div style={{ color: '#a3a3a3', fontSize: 13, textAlign: 'center', padding: '16px 0' }}>
                     No agent found for "{search}"
                   </div>
                 : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -397,8 +407,8 @@ function Homepage() {
                     }}>
                       <AgentAvatar agentId={a.agentId} size={36} />
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{agentName(a.agentId)}</div>
-                        <div style={{ fontSize: 11, color: '#525252' }}>{a.category} · {a.interactionCount} txs</div>
+                        <div style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{agentEns(a.agentId)}</div>
+                        <div style={{ fontSize: 11, color: '#a3a3a3' }}>{a.category} · ({a.interactionCount} txs)</div>
                       </div>
                       <ScoreStars score={a.score} size={16} />
                       <span style={{ fontWeight: 700, fontSize: 15, color: scoreColor(a.score), minWidth: 28 }}>{a.score}</span>
@@ -452,7 +462,7 @@ function Homepage() {
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 22 }}>
             <h2 style={{ fontSize: 17, fontWeight: 600, color: '#fff' }}>Recent feedback</h2>
-            <span style={{ fontSize: 12, color: '#525252' }}>{MOCK_REVIEWS.length} verified</span>
+            <span style={{ fontSize: 12, color: '#a3a3a3' }}>{MOCK_REVIEWS.length} verified</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             {MOCK_REVIEWS.map((r, i) => <ReviewCard key={i} review={r} />)}
@@ -465,13 +475,13 @@ function Homepage() {
         <div style={{ maxWidth: 860, margin: '0 auto' }}>
           <div style={{ display: 'flex', gap: 64, alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 280 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#525252', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#a3a3a3', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14 }}>
                 About
               </div>
               <h2 style={{ fontSize: 36, fontWeight: 700, marginBottom: 16, letterSpacing: -1, lineHeight: 1.1, color: '#fff' }}>
                 We are<br /><span style={{ color: '#00b67a' }}>TrustAgent</span>
               </h2>
-              <p style={{ fontSize: 14, color: '#525252', lineHeight: 1.8 }}>
+              <p style={{ fontSize: 14, color: '#a3a3a3', lineHeight: 1.8 }}>
                 In agentic commerce, two agents that don't know each other have no way to trust each other.
                 A malicious actor can create an agent, defraud, abandon it, and start fresh with a clean wallet.
                 TrustAgent fixes this: every agent accumulates a score based on real interaction feedback,
@@ -482,7 +492,8 @@ function Homepage() {
               {[
                 { label: 'ERC-8004', desc: 'On-chain identity & reputation standard. Every agent gets a verifiable agentId as ERC-721.', color: '#00b67a' },
                 { label: 'Flare TEE', desc: 'Score computed inside a Trusted Execution Environment. Signed with ECDSA — ecrecover-able by anyone.', color: '#3b82f6' },
-                { label: 'ENS', desc: 'Score stored as text records on agent-42.trustagent.eth. Trustless: read directly on-chain, no API needed.', color: '#a855f7' },
+                { label: 'ENS', desc: 'Score stored as text records on agent-nexus.trustagent.eth. Trustless: read directly on-chain, no API needed.', color: '#a855f7' },
+                { label: 'Multi-chain', desc: 'Live on Sepolia & Hedera today. Built to extend beyond EVM — Solana, Cosmos, and any chain with an event indexer are next.', color: '#f97316' },
               ].map(item => (
                 <div key={item.label} style={{
                   background: '#0d0d0d', borderRadius: 8, padding: '14px 16px',
@@ -490,7 +501,7 @@ function Homepage() {
                   borderLeftColor: item.color,
                 }}>
                   <div style={{ fontWeight: 600, fontSize: 13, color: '#fff', marginBottom: 4 }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: '#525252', lineHeight: 1.6 }}>{item.desc}</div>
+                  <div style={{ fontSize: 12, color: '#a3a3a3', lineHeight: 1.6 }}>{item.desc}</div>
                 </div>
               ))}
             </div>
@@ -540,7 +551,7 @@ function Register({ onRegistered }: { onRegistered: (agent: Agent) => void }) {
     <div style={{ maxWidth: 480, margin: '64px auto', padding: '0 24px' }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: '#fff' }}>Register an Agent</h1>
-        <p style={{ color: '#525252', marginTop: 8, fontSize: 14 }}>
+        <p style={{ color: '#a3a3a3', marginTop: 8, fontSize: 14 }}>
           Mint an ERC-8004 identity and create an ENS subdomain for your agent.
         </p>
       </div>
@@ -559,7 +570,7 @@ function Register({ onRegistered }: { onRegistered: (agent: Agent) => void }) {
               width: '100%', padding: '11px 14px', borderRadius: 6,
               border: '1px solid #2a2a2a', fontSize: 14, marginBottom: 16,
             }}
-            onFocus={e => (e.currentTarget.style.borderColor = '#525252')}
+            onFocus={e => (e.currentTarget.style.borderColor = '#a3a3a3')}
             onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
           />
           <button type="submit" disabled={loading} style={{
@@ -588,7 +599,7 @@ function Register({ onRegistered }: { onRegistered: (agent: Agent) => void }) {
               <AgentAvatar agentId={result.agentId} size={44} />
               <div>
                 <div style={{ fontWeight: 600, fontSize: 14, color: '#fff' }}>{result.ensName}</div>
-                <div style={{ fontSize: 12, color: '#525252', marginTop: 2 }}>Agent ID #{result.agentId}</div>
+                <div style={{ fontSize: 12, color: '#a3a3a3', marginTop: 2 }}>Agent ID #{result.agentId}</div>
               </div>
             </div>
           </div>
@@ -639,7 +650,7 @@ function RateAgent({ agents, onFeedback }: { agents: Agent[]; onFeedback: (agent
     <div style={{ maxWidth: 480, margin: '64px auto', padding: '0 24px' }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: '#fff' }}>Rate an Agent</h1>
-        <p style={{ color: '#525252', marginTop: 8, fontSize: 14 }}>
+        <p style={{ color: '#a3a3a3', marginTop: 8, fontSize: 14 }}>
           Submit verified feedback after a USDC-settled interaction.
         </p>
       </div>
@@ -656,7 +667,7 @@ function RateAgent({ agents, onFeedback }: { agents: Agent[]; onFeedback: (agent
                 <AgentAvatar agentId={selectedAgent.agentId} size={28} />
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 12, color: '#fff' }}>{selectedAgent.ensName}</div>
-                  <div style={{ fontSize: 11, color: '#525252' }}>Score: {selectedAgent.score} · {selectedAgent.category}</div>
+                  <div style={{ fontSize: 11, color: '#a3a3a3' }}>Score: {selectedAgent.score} · {selectedAgent.category}</div>
                 </div>
               </div>
             )}
@@ -692,7 +703,7 @@ function RateAgent({ agents, onFeedback }: { agents: Agent[]; onFeedback: (agent
 
           <div>
             <label style={{ fontSize: 11, fontWeight: 600, color: '#a3a3a3', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
-              Proof of Payment <span style={{ color: '#525252', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+              Proof of Payment <span style={{ color: '#a3a3a3', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
             </label>
             <input value={proof} onChange={e => setProof(e.target.value)}
               placeholder="0x... USDC tx hash"
@@ -725,7 +736,7 @@ function RateAgent({ agents, onFeedback }: { agents: Agent[]; onFeedback: (agent
               <span style={{ color: '#a3a3a3' }}>New composite score</span>
               <span style={{ fontWeight: 700, fontSize: 18, color: scoreColor(result.score) }}>{result.score}</span>
             </div>
-            <div style={{ fontSize: 11, color: '#525252', wordBreak: 'break-all', fontFamily: 'monospace' }}>tx: {result.txHash}</div>
+            <div style={{ fontSize: 11, color: '#a3a3a3', wordBreak: 'break-all', fontFamily: 'monospace' }}>tx: {result.txHash}</div>
           </div>
         )}
       </div>
@@ -785,7 +796,7 @@ function AgentProviderDropdown({ onRegister }: { onRegister: () => void }) {
             onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
           >
             <span>Register an agent</span>
-            <span style={{ fontSize: 11, color: '#525252', fontWeight: 400 }}>Mint ERC-8004 identity + ENS subdomain</span>
+            <span style={{ fontSize: 11, color: '#a3a3a3', fontWeight: 400 }}>Mint ERC-8004 identity + ENS subdomain</span>
           </button>
 
           <div style={{ height: 1, background: '#1a1a1a', margin: '4px 0' }} />
@@ -803,7 +814,7 @@ function AgentProviderDropdown({ onRegister }: { onRegister: () => void }) {
             onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
           >
             <span>Create an account</span>
-            <span style={{ fontSize: 11, color: '#525252', fontWeight: 400 }}>Manage all your registered agents</span>
+            <span style={{ fontSize: 11, color: '#a3a3a3', fontWeight: 400 }}>Manage all your registered agents</span>
           </button>
         </div>
       )}
@@ -839,7 +850,7 @@ export default function App() {
                 padding: '6px 14px', borderRadius: 6, border: 'none', fontSize: 13,
                 fontWeight: 500, cursor: 'pointer', transition: 'background 0.1s, color 0.1s',
                 background: tab === item.id ? '#141414' : 'transparent',
-                color: tab === item.id ? '#fff' : '#525252',
+                color: tab === item.id ? '#fff' : '#a3a3a3',
               }}>
                 {item.label}
               </button>
@@ -847,7 +858,7 @@ export default function App() {
           </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#525252', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#a3a3a3', flexShrink: 0 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00b67a', display: 'inline-block' }} />
               Flare TEE
             </div>
@@ -862,7 +873,7 @@ export default function App() {
         {tab === 'rate' && <RateAgent agents={agents} onFeedback={(id, score) => setAgents(prev => prev.map(a => a.agentId === id ? { ...a, score } : a))} />}
       </main>
 
-      <footer style={{ borderTop: '1px solid #1a1a1a', color: '#525252', padding: '24px 24px' }}>
+      <footer style={{ borderTop: '1px solid #1a1a1a', color: '#a3a3a3', padding: '24px 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ marginBottom: 4 }}>

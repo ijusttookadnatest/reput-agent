@@ -211,15 +211,15 @@ export const MOCK_AGENTS: Agent[] = [
 ]
 
 export const MOCK_REVIEWS: Review[] = [
-  { agentId: 3, author: '0xAlice...9B3', authorName: 'Alice.eth', value: 95, tag: 'successRate', comment: 'Executed the swap perfectly. Fast, no slippage, exactly as negotiated. Will definitely use again.', date: '2 hours ago' },
-  { agentId: 5, author: '0xBob...2C4', authorName: 'Bob.eth', value: 90, tag: 'deliverySpeed', comment: 'Delivered the arbitrage signal in under 200ms. Impressive reliability across all my test runs.', date: '5 hours ago' },
-  { agentId: 7, author: '0xCarol...5D7', authorName: 'Carol.eth', value: 92, tag: 'accuracy', comment: 'Price feed accurate within 0.05%. Best data oracle I\'ve used on Sepolia. TEE signature verified instantly.', date: '8 hours ago' },
-  { agentId: 9, author: '0xDave...8E1', authorName: 'Dave.eth', value: 86, tag: 'successRate', comment: 'Handled the NFT batch mint flawlessly. Third interaction, consistent quality every time.', date: '1 day ago' },
-  { agentId: 12, author: '0xEve...3F6', authorName: 'Eve.eth', value: 88, tag: 'accuracy', comment: 'Payment routing was perfect. Zero failed transactions across 50+ micro-payments. Solid performance.', date: '1 day ago' },
-  { agentId: 28, author: '0xFrank...7A2', authorName: 'Frank.eth', value: 82, tag: 'reliability', comment: 'Uptime was 99.9% over 2 weeks. Data feeds never missed a beat during high volatility periods.', date: '2 days ago' },
-  { agentId: 16, author: '0xGrace...1B9', authorName: 'Grace.eth', value: 79, tag: 'deliverySpeed', comment: 'Good execution speed, slight delay during peak hours but nothing critical. Score matches real performance.', date: '2 days ago' },
-  { agentId: 38, author: '0xHank...4C5', authorName: 'Hank.eth', value: 84, tag: 'successRate', comment: 'Processed USDC cross-chain transfer in 40 seconds. Better than any bridge I\'ve tried manually.', date: '3 days ago' },
-  { agentId: 3, author: '0xIris...6D8', authorName: 'Iris.eth', value: 93, tag: 'successRate', comment: 'Consistent top-tier execution. The TEE verification gave me confidence to send a higher-value transaction.', date: '3 days ago' },
+  { agentId: 3, author: '0xF4a9...3C1', authorName: 'yield-hunter.eth', value: 95, tag: 'successRate', comment: 'Executed the swap perfectly. Fast, no slippage, exactly as negotiated. Will definitely use again.', date: '2 hours ago' },
+  { agentId: 5, author: '0xB2e7...8A0', authorName: 'arb-sentinel.eth', value: 90, tag: 'deliverySpeed', comment: 'Delivered the arbitrage signal in under 200ms. Impressive reliability across all my test runs.', date: '5 hours ago' },
+  { agentId: 7, author: '0xC9d1...5F4', authorName: 'quant-zero.eth', value: 92, tag: 'accuracy', comment: 'Price feed accurate within 0.05%. Best data oracle I\'ve used on Sepolia. TEE signature verified instantly.', date: '8 hours ago' },
+  { agentId: 9, author: '0xE3b5...2D9', authorName: 'flash-alpha.eth', value: 86, tag: 'successRate', comment: 'Handled the NFT batch mint flawlessly. Third interaction, consistent quality every time.', date: '1 day ago' },
+  { agentId: 12, author: '0xA7f2...6E3', authorName: 'mev-catcher.eth', value: 88, tag: 'accuracy', comment: 'Payment routing was perfect. Zero failed transactions across 50+ micro-payments. Solid performance.', date: '1 day ago' },
+  { agentId: 28, author: '0xD5c8...1B7', authorName: 'sniper-v3.eth', value: 82, tag: 'reliability', comment: 'Uptime was 99.9% over 2 weeks. Data feeds never missed a beat during high volatility periods.', date: '2 days ago' },
+  { agentId: 16, author: '0x19e4...7F2', authorName: 'degen-bot.eth', value: 79, tag: 'deliverySpeed', comment: 'Good execution speed, slight delay during peak hours but nothing critical. Score matches real performance.', date: '2 days ago' },
+  { agentId: 38, author: '0x6aB3...4C8', authorName: 'cross-chain-x.eth', value: 84, tag: 'successRate', comment: 'Processed USDC cross-chain transfer in 40 seconds. Better than any bridge I\'ve tried manually.', date: '3 days ago' },
+  { agentId: 3, author: '0x2dF9...0A5', authorName: 'alpha-seeker.eth', value: 93, tag: 'successRate', comment: 'Consistent top-tier execution. The TEE verification gave me confidence to send a higher-value transaction.', date: '3 days ago' },
 ]
 
 export const CATEGORIES = [
