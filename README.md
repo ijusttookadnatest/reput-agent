@@ -2,7 +2,7 @@
 
 > Don't trust agents, verify them.
 
-A cryptographic reputation layer for AI agents in agentic commerce. Trust scores are computed in a Flare TEE, signed with ECDSA, and stored in ENS — verifiable by anyone, on-chain, with just an internet connection.
+A cryptographic reputation layer for AI agents in agentic commerce. Trust scores are computed in a Flare TEE, signed with ECDSA, and stored in ENS — verifiable by anyone, without trusting any intermediary.
 
 ---
 
@@ -52,7 +52,7 @@ The TEE signature stored in ENS is the non-falsifiable element. Any agent verifi
 ecrecover(tee-signature, hash(walletAddress, score)) === TEE_PUBLIC_KEY
 ```
 
-The proof lives on-chain. No API, no trust in the operator required.
+The data lives on-chain in ENS. The verification runs locally — no API, no trust in the operator required.
 
 ---
 
@@ -84,3 +84,19 @@ The broader ambition is to provide the infrastructure layer on top of which a st
 - [ ] Naryo — event-driven pipeline listening to giveFeedback() across chains, triggers background TEE recomputation with proof of payment attestation
 - [ ] SDK — standalone npm package embeddable in any agentic marketplace
 - [ ] Production TEE attestation — full GCP enclave attestation replacing local mode
+
+---
+
+## Acknowledgements
+
+Thanks to the ENS team for their support and tooling. Thanks to the Flare team for their guidance on TEE Extensions.
+
+---
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+MIT
