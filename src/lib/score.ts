@@ -66,8 +66,10 @@ async function pollTEEResult(
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetch(url)
+      const rawText = await res.text()
+      console.log(`[TEE] poll attempt ${i + 1}/${maxAttempts} status=${res.status} body=${rawText.slice(0, 120)}`)
       if (res.ok) {
-        const json = (await res.json()) as { result?: { status: number; data: string } }
+        const json = JSON.parse(rawText) as { result?: { status: number; data: string } }
         if (json.result?.status === 1) {
           const dataHex = json.result.data.startsWith('0x')
             ? json.result.data.slice(2)
@@ -79,9 +81,11 @@ async function pollTEEResult(
         if (json.result?.status === 0) {
           throw new Error(`TEE returned error status for instruction ${id}`)
         }
+        console.log(`[TEE] not ready yet (status=${json.result?.status ?? 'none'})`)
       }
     } catch (e: any) {
       if (e.message?.startsWith('TEE returned')) throw e
+      console.log(`[TEE] poll error: ${e.message}`)
     }
     await new Promise((r) => setTimeout(r, 2000))
   }
