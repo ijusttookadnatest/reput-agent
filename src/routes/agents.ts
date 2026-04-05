@@ -2,6 +2,7 @@ import { Router } from 'express'
 import type { Request, Response, IRouter } from 'express'
 import Database from 'better-sqlite3'
 import path from 'path'
+import { getCachedTeeAddress } from '../lib/score.js'
 
 export const agentsRouter: IRouter = Router()
 
@@ -35,4 +36,10 @@ agentsRouter.get('/', (_req: Request, res: Response) => {
   }))
 
   res.json({ agents })
+})
+
+agentsRouter.get('/tee-pubkey', (_req: Request, res: Response) => {
+  const address = getCachedTeeAddress()
+  console.log(`[agents] GET /agents/tee-pubkey → ${address ?? 'not yet cached'}`)
+  res.json({ address })
 })

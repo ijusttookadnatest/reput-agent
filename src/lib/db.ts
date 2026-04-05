@@ -18,6 +18,7 @@ db.exec(`
     txHash TEXT PRIMARY KEY,
     usedAt INTEGER NOT NULL DEFAULT (unixepoch())
   );
+
 `)
 
 // Migration pour les DBs existantes sans la colonne firstFeedbackAt

@@ -52,6 +52,8 @@ export async function registerEnsSubname(agentId: number, ownerAddress: string):
 export async function setTrustRecords(ensName: string, records: {
   score: number
   walletAddress: string
+  reliability?: number
+  seniority?: number
   teeSignature?: string
   teeAttestation?: string
 }) {
@@ -68,6 +70,8 @@ export async function setTrustRecords(ensName: string, records: {
       { key: 'trust-score',   value: String(records.score) },
       { key: 'eth-address',   value: records.walletAddress },
       { key: 'last-updated',  value: String(Math.floor(Date.now() / 1000)) },
+      ...(records.reliability !== undefined ? [{ key: 'reliability', value: String(records.reliability) }] : []),
+      ...(records.seniority   !== undefined ? [{ key: 'seniority',   value: String(records.seniority) }]   : []),
       ...(records.teeSignature   ? [{ key: 'tee-signature',   value: records.teeSignature }]   : []),
       ...(records.teeAttestation ? [{ key: 'tee-attestation', value: records.teeAttestation }] : []),
     ],

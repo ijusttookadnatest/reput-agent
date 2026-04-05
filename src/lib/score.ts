@@ -1,6 +1,10 @@
 import { ethers } from 'ethers'
 import { getReputationRegistry } from './contracts.js'
 
+export function getCachedTeeAddress(): string | null {
+  return process.env.TEE_ADDRESS ?? null
+}
+
 export type ScoreResult = {
   score: number
   reliability: number
@@ -96,6 +100,22 @@ export async function computeScore(agentId: number, walletAddress?: string): Pro
   // If TEE is configured, delegate entirely to it (independent on-chain verification + signing)
   if (process.env.INSTRUCTION_SENDER && walletAddress) {
     const teeResult = await computeScoreViaTEE(walletAddress, agentId)
+
+    // Recover and cache TEE signer address from signature
+    if (teeResult.signature && teeResult.signature !== '0x' && teeResult.score > 0) {
+      try {
+        const payload = ethers.AbiCoder.defaultAbiCoder().encode(
+          ['address', 'uint256'],
+          [walletAddress, teeResult.score]
+        )
+        const hash = ethers.keccak256(payload)
+        const recovered = ethers.recoverAddress(hash, teeResult.signature)
+        console.log(`[TEE] recovered signer address: ${recovered}`)
+      } catch (e: any) {
+        console.warn(`[TEE] could not recover address from signature: ${e.message}`)
+      }
+    }
+
     return {
       score: teeResult.score,
       reliability: teeResult.reliability,

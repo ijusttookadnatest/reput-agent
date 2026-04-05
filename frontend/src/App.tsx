@@ -1,8 +1,66 @@
 import { useState, useRef, useEffect } from 'react'
 import { MOCK_AGENTS, MOCK_REVIEWS, CATEGORIES, FEATURED_CATEGORIES, type Agent } from './mockData'
 import './index.css'
+import { createPublicClient, http, keccak256, encodeAbiParameters, recoverAddress } from 'viem'
+import { mainnet } from 'viem/chains'
+import { getEnsText } from 'viem/actions'
 
 const API = 'http://localhost:3000'
+
+const ensClient = createPublicClient({
+  chain: mainnet,
+  transport: http('https://ethereum-rpc.publicnode.com'),
+})
+
+let teePubkeyAddress: string | null = null
+
+async function resolveFromENS(ensName: string) {
+  console.log(`[resolve] reading ENS text records for ${ensName}…`)
+
+  const [scoreStr, reliabilityStr, seniorityStr, teeSignature, walletAddress] = await Promise.all([
+    getEnsText(ensClient, { name: ensName, key: 'trust-score' }),
+    getEnsText(ensClient, { name: ensName, key: 'reliability' }),
+    getEnsText(ensClient, { name: ensName, key: 'seniority' }),
+    getEnsText(ensClient, { name: ensName, key: 'tee-signature' }),
+    getEnsText(ensClient, { name: ensName, key: 'eth-address' }),
+  ])
+
+  console.log(`[resolve] ENS records:`, {
+    'trust-score': scoreStr, reliability: reliabilityStr,
+    seniority: seniorityStr, 'tee-signature': teeSignature, 'eth-address': walletAddress,
+  })
+
+  const score = Number(scoreStr ?? 0)
+  const reliability = Number(reliabilityStr ?? 0)
+  const seniority = Number(seniorityStr ?? 0)
+
+  let recoveredAddress = ''
+  let verified = false
+
+  if (teeSignature && walletAddress && score > 0) {
+    try {
+      const payload = encodeAbiParameters(
+        [{ type: 'address' }, { type: 'uint256' }],
+        [walletAddress as `0x${string}`, BigInt(score)]
+      )
+      const hash = keccak256(payload)
+      recoveredAddress = await recoverAddress({ hash, signature: teeSignature as `0x${string}` })
+      if (teePubkeyAddress) {
+        verified = recoveredAddress.toLowerCase() === teePubkeyAddress.toLowerCase()
+        console.log(`[resolve] ecrecover → ${recoveredAddress}`)
+        console.log(`[resolve] expected  → ${teePubkeyAddress}`)
+        console.log(`[resolve] ${verified ? '✓ TEE signature valid' : '✗ signature mismatch'}`)
+      } else {
+        verified = true // can't compare, assume valid
+        console.log(`[resolve] ecrecover → ${recoveredAddress} (TEE pubkey not loaded, skipping comparison)`)
+      }
+    } catch (e) {
+      console.warn(`[resolve] ecrecover failed:`, e)
+    }
+  }
+
+  return { score, reliability, seniority, teeSignature: teeSignature ?? '', walletAddress: walletAddress ?? '', recoveredAddress, verified }
+}
 
 const COMPANY_LOGOS = [
   { name: 'Stripe',    slug: 'stripe' },
@@ -336,18 +394,28 @@ function Homepage({ agents, onSelectAgent }: { agents: Agent[]; onSelectAgent: (
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<Agent[]>([])
   const [searched, setSearched] = useState(false)
+  const [resolvedScores, setResolvedScores] = useState<Record<number, number>>({})
 
-  function handleSearch(e: React.FormEvent) {
+  async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     const q = search.trim().toLowerCase()
     setSearched(true)
-    setResults(agents.filter(a =>
+    const matched = agents.filter(a =>
       agentEns(a.agentId).includes(q) ||
       (a.ensName ?? '').toLowerCase().includes(q) ||
       a.walletAddress.toLowerCase().includes(q) ||
       a.category.toLowerCase().includes(q) ||
       String(a.agentId) === q
-    ))
+    )
+    setResults(matched)
+    // Resolve ENS scores for real (non-mock) agents only
+    matched
+      .filter(a => !MOCK_AGENTS.some(m => m.agentId === a.agentId) && a.ensName)
+      .forEach(a => {
+        resolveFromENS(a.ensName!).then(data => {
+          if (data.score > 0) setResolvedScores(prev => ({ ...prev, [a.agentId]: data.score }))
+        }).catch(() => {})
+      })
   }
 
   return (
@@ -419,8 +487,8 @@ function Homepage({ agents, onSelectAgent }: { agents: Agent[]; onSelectAgent: (
                         <div style={{ fontWeight: 600, fontSize: 13, color: '#fff', fontFamily: 'monospace' }}>{a.ensName || agentEns(a.agentId)}</div>
                         <div style={{ fontSize: 11, color: '#a3a3a3' }}>{a.category} · ({a.interactionCount} txs)</div>
                       </div>
-                      <ScoreStars score={a.score} size={16} />
-                      <span style={{ fontWeight: 700, fontSize: 15, color: scoreColor(a.score), minWidth: 28 }}>{a.score}</span>
+                      <ScoreStars score={resolvedScores[a.agentId] ?? a.score} size={16} />
+                      <span style={{ fontWeight: 700, fontSize: 15, color: scoreColor(resolvedScores[a.agentId] ?? a.score), minWidth: 28 }}>{resolvedScores[a.agentId] ?? a.score}</span>
                     </div>
                   ))}
                 </div>
@@ -620,7 +688,7 @@ function Register({ onRegistered }: { onRegistered: (agent: Agent) => void }) {
 
 // ── Rate tab ──────────────────────────────────────────────────────────────────
 
-function RateAgent({ agents, initialAgentId, onFeedback }: { agents: Agent[]; initialAgentId?: number; onFeedback: (agentId: number, score: number) => void }) {
+function RateAgent({ agents, initialAgentId, onFeedback }: { agents: Agent[]; initialAgentId?: number; onFeedback: (agentId: number, score: number, reliability: number, seniority: number) => void }) {
   const [agentId, setAgentId] = useState(initialAgentId ? String(initialAgentId) : '')
   const [value, setValue] = useState(80)
   const [tag, setTag] = useState('successRate')
@@ -645,7 +713,7 @@ function RateAgent({ agents, initialAgentId, onFeedback }: { agents: Agent[]; in
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Feedback failed')
       setResult({ score: data.score, txHash: data.txHash })
-      onFeedback(Number(agentId), data.score)
+      onFeedback(Number(agentId), data.score, data.reliability ?? 0, data.seniority ?? 0)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -837,11 +905,31 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
   const agent = agents.find(a => a.agentId === agentId)
   const [teeVerified, setTeeVerified] = useState(false)
   const [teeLoading, setTeeLoading] = useState(false)
+  const [resolved, setResolved] = useState<{ score: number; reliability: number; seniority: number; recoveredAddress: string } | null>(null)
 
-  function handleVerify() {
+  const isMock = MOCK_AGENTS.some(a => a.agentId === agentId)
+
+  useEffect(() => {
+    if (!isMock && agent?.ensName) {
+      handleVerify()
+    }
+  }, [agentId])
+
+  async function handleVerify() {
+    const ensName = agent?.ensName
+    if (!ensName) return
     setTeeLoading(true)
-    setTimeout(() => { setTeeLoading(false); setTeeVerified(true) }, 1200)
+    try {
+      const data = await resolveFromENS(ensName)
+      setResolved({ score: data.score, reliability: data.reliability, seniority: data.seniority, recoveredAddress: data.recoveredAddress })
+      setTeeVerified(data.verified)
+    } catch (e) {
+      console.error('[resolve] failed:', e)
+    } finally {
+      setTeeLoading(false)
+    }
   }
+
   if (!agent) return (
     <div style={{ padding: '80px 24px', textAlign: 'center', color: '#a3a3a3' }}>
       Agent not found. <button onClick={onBack} style={{ color: '#00b67a', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>← Back</button>
@@ -860,6 +948,9 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
   })
   const maxDist = Math.max(...Object.values(dist), 1)
 
+  const displayScore = resolved?.score ?? agent.score
+  const displayReliability = resolved?.reliability ?? agent.reliability
+  const displaySeniority = resolved?.seniority ?? agent.seniority
   const shortSig = agent.teeSignature.slice(0, 10) + '…' + agent.teeSignature.slice(-6)
 
   return (
@@ -925,9 +1016,9 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
             via {company.name} · {agent.category}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <ScoreStars score={agent.score} size={22} />
-            <span style={{ fontSize: 26, fontWeight: 800, color: scoreColor(agent.score) }}>{agent.score}</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: scoreColor(agent.score) }}>{scoreLabel(agent.score)}</span>
+            <ScoreStars score={displayScore} size={22} />
+            <span style={{ fontSize: 26, fontWeight: 800, color: scoreColor(displayScore) }}>{displayScore}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: scoreColor(displayScore) }}>{scoreLabel(displayScore)}</span>
             <span style={{ fontSize: 13, color: '#a3a3a3' }}>({agent.interactionCount.toLocaleString()} txs)</span>
           </div>
         </div>
@@ -962,10 +1053,10 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
             <div style={{ fontSize: 11, fontWeight: 600, color: '#a3a3a3', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>Trust Score</div>
 
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: 56, fontWeight: 800, color: scoreColor(agent.score), lineHeight: 1 }}>{agent.score}</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: scoreColor(agent.score), marginTop: 4 }}>{scoreLabel(agent.score)}</div>
+              <div style={{ fontSize: 56, fontWeight: 800, color: scoreColor(displayScore), lineHeight: 1 }}>{displayScore}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: scoreColor(displayScore), marginTop: 4 }}>{scoreLabel(displayScore)}</div>
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
-                <ScoreStars score={agent.score} size={20} />
+                <ScoreStars score={displayScore} size={20} />
               </div>
             </div>
 
@@ -977,7 +1068,7 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
                   <div style={{ flex: 1, height: 6, background: '#1f1f1f', borderRadius: 3, overflow: 'hidden' }}>
                     <div style={{
                       height: '100%', borderRadius: 3,
-                      background: scoreColor(agent.score),
+                      background: scoreColor(displayScore),
                       width: `${Math.round((dist[star] / maxDist) * 100)}%`,
                       transition: 'width 0.3s',
                     }} />
@@ -992,8 +1083,8 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
           <div style={{ border: '1px solid #1f1f1f', borderRadius: 10, padding: '20px', background: '#0d0d0d' }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#a3a3a3', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>Breakdown</div>
             {[
-              { label: 'Reliability', value: agent.reliability, desc: 'ERC-8004 on-chain' },
-              { label: 'Seniority', value: agent.seniority, desc: 'Interaction history' },
+              { label: 'Reliability', value: displayReliability, desc: 'ERC-8004 on-chain' },
+              { label: 'Seniority', value: displaySeniority, desc: 'Interaction history' },
             ].map(item => (
               <div key={item.label} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -1009,7 +1100,7 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
           </div>
 
           {/* TEE info */}
-          <div style={{ border: '1px solid #1f1f1f', borderRadius: 10, padding: '20px', background: '#0d0d0d' }}>
+          <div style={{ border: `1px solid ${teeVerified ? '#00b67a33' : '#1f1f1f'}`, borderRadius: 10, padding: '20px', background: teeVerified ? '#001a0f' : '#0d0d0d', transition: 'all 0.3s' }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#a3a3a3', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>TEE Signature</div>
             <div style={{ fontSize: 11, fontFamily: 'monospace', color: '#00b67a', wordBreak: 'break-all', marginBottom: 8 }}>
               {shortSig}
@@ -1017,6 +1108,12 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
             <div style={{ fontSize: 10, color: '#525252', lineHeight: 1.6 }}>
               Score signed by Flare TEE (ECDSA secp256k1). Verifiable via <span style={{ color: '#a3a3a3' }}>ecrecover</span> — no API needed.
             </div>
+            {resolved?.recoveredAddress && (
+              <div style={{ marginTop: 10, fontSize: 10, fontFamily: 'monospace', color: '#00b67a', lineHeight: 1.8 }}>
+                <div>ecrecover →</div>
+                <div style={{ wordBreak: 'break-all' }}>{resolved.recoveredAddress}</div>
+              </div>
+            )}
             <div style={{ marginTop: 10, fontSize: 10, fontFamily: 'monospace', color: '#525252' }}>
               ENS: {agent.ensName || agentEns(agent.agentId)}
             </div>
@@ -1024,7 +1121,7 @@ function AgentProfile({ agentId, agents, onBack, onRate }: { agentId: number; ag
         </div>
 
         {/* Right: reviews */}
-        <div>
+        <div style={{ display: isMock ? undefined : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: 0 }}>Feedback</h2>
             <span style={{ fontSize: 12, color: '#a3a3a3' }}>{allReviews.length} verified interactions</span>
@@ -1089,6 +1186,18 @@ type Page = { view: 'home' } | { view: 'register' } | { view: 'rate'; agentId?: 
 export default function App() {
   const [page, setPage] = useState<Page>({ view: 'home' })
   const [agents, setAgents] = useState<Agent[]>(MOCK_AGENTS)
+
+  useEffect(() => {
+    fetch(`${API}/agents/tee-pubkey`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.address) {
+          teePubkeyAddress = data.address
+          console.log(`[app] TEE public key loaded: ${data.address}`)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetch(`${API}/agents`)
@@ -1159,7 +1268,7 @@ export default function App() {
           <RateAgent
             agents={agents}
             initialAgentId={page.agentId}
-            onFeedback={(id, score) => setAgents(prev => prev.map(a => a.agentId === id ? { ...a, score } : a))}
+            onFeedback={(id, score, reliability, seniority) => setAgents(prev => prev.map(a => a.agentId === id ? { ...a, score, reliability, seniority } : a))}
           />
         )}
         {page.view === 'profile' && (

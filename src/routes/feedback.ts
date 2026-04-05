@@ -74,6 +74,8 @@ feedbackRouter.post('/', async (req: Request, res: Response) => {
       await setTrustRecords(agentRow.ensName, {
         score: scoreResult.score,
         walletAddress: agentRow.walletAddress,
+        reliability: scoreResult.reliability,
+        seniority: scoreResult.seniority,
         teeSignature: scoreResult.teeSignature,
         teeAttestation: scoreResult.teeAttestation,
       })
